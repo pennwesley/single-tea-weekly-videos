@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>单泡茶热门短视频</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <h1>🍵 单泡茶热门短视频</h1>
+  <p class="sub">每日自动更新 · 数据更新于 <span id="updated">—</span> · 关键词「<span id="kw">单泡茶</span>」</p>
+</header>
+<section class="filters">
+  <label>平台
+    <select id="platform">
+      <option value="all">全部</option>
+      <option value="douyin">抖音</option>
+      <option value="channels">视频号</option>
+    </select>
+  </label>
+  <label>排序
+    <select id="sort">
+      <option value="newest">最新发布</option>
+      <option value="like">最多点赞</option>
+      <option value="share">最多转发</option>
+    </select>
+  </label>
+  <label class="switch"><input type="checkbox" id="leadOnly"> 仅看潜在客户线索</label>
+  <span class="count" id="count"></span>
+</section>
+<main id="list" class="list"></main>
+<script src="app.js"></script>
+</body>
+</html>
