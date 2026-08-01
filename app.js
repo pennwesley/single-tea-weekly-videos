@@ -34,6 +34,30 @@ function scheduleWeb(web){
     document.removeEventListener('visibilitychange', h);
   });
 }
+// 复制链接（微信内 App 唤起常被拦截，退化为手动复制）
+function copyLink(text){
+  text = decodeURIComponent(text);
+  let toastTimer;
+  function toast(msg){
+    let t = document.getElementById('toast');
+    if (!t){ t = document.createElement('div'); t.id = 'toast'; t.className = 'toast'; document.body.appendChild(t); }
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 2000);
+  }
+  function fallback(){
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed'; ta.style.top = '-9999px';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try { document.execCommand('copy'); toast('✅ 链接已复制，去抖音粘贴打开'); }
+    catch (e) { toast('复制失败，请长按链接手动复制'); }
+    document.body.removeChild(ta);
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){ toast('✅ 链接已复制，去抖音粘贴打开'); }).catch(fallback);
+  } else { fallback(); }
+}
 
 function render() {
   const pf = document.getElementById('platform').value;
@@ -79,6 +103,7 @@ function render() {
         <div class="actions">
           <a class="btn-app" href="snssdk1128://aweme/detail/${id}" onclick="scheduleWeb('${eweb}')">📱 在抖音打开</a>
           <a class="btn-web" href="${encodeURI(x.video_url)}" target="_blank" rel="noopener">🌐 网页版</a>
+          <button class="btn-copy" onclick="copyLink('${eweb}')">📋 复制链接</button>
         </div></div>`;
     }
     if (x.video_url) {
