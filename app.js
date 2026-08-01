@@ -14,29 +14,10 @@ function platformLabel(p) { return p === 'douyin' ? '抖音' : '视频号'; }
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-// 抖音：尝试唤起 App（snssdk1128 scheme），失败/桌面端回退到网页版
-function openDouyin(id, web){
-  id = decodeURIComponent(id); web = decodeURIComponent(web);
-  const scheme = 'snssdk1128://aweme/detail/' + id;
-  let fb = setTimeout(function(){ window.location.href = web; }, 1200);
-  document.addEventListener('visibilitychange', function h(){
-    if (document.hidden) clearTimeout(fb);          // App 已打开，取消回退
-    document.removeEventListener('visibilitychange', h);
-  });
-  window.location.href = scheme;
-}
-// 仅设置网页版回退（scheme 由 <a href> 原生触发，兼容性更好）
-function scheduleWeb(web){
-  web = decodeURIComponent(web);
-  let fb = setTimeout(function(){ window.location.href = web; }, 1200);
-  document.addEventListener('visibilitychange', function h(){
-    if (document.hidden) clearTimeout(fb);
-    document.removeEventListener('visibilitychange', h);
-  });
-}
-// 复制链接（微信内 App 唤起常被拦截，退化为手动复制）
-function copyLink(text){
+// 复制链接（抖音用官方长链，视频号用微信网页版链接；复制后到对应 App 粘贴打开）
+function copyLink(text, tip){
   text = decodeURIComponent(text);
+  tip = tip || '打开抖音自动跳转';
   let toastTimer;
   function toast(msg){
     let t = document.getElementById('toast');
@@ -82,10 +63,7 @@ function render() {
         ${x.is_lead ? '<span class="lead">🔥潜在客户</span>' : ''}
         ${x.source_type === 'history' ? '<span class="hist">历史</span>' : ''}
       </div>`;
-    const titleCls = (x.platform === 'douyin' && x.video_url) ? 'title clickable' : 'title';
-    const titleOnclick = (x.platform === 'douyin' && x.video_url)
-      ? `onclick="openDouyin('${encodeURIComponent(x.video_id)}','${encodeURIComponent(x.video_url)}')"` : '';
-    const titleHtml = `<div class="${titleCls}" ${titleOnclick}>${escapeHtml(x.title || '(无标题)')}</div>`;
+    const titleHtml = `<div class="title">${escapeHtml(x.title || '(无标题)')}</div>`;
     const metaHtml = `
       <div class="meta">
         <span>👤 ${escapeHtml(x.author || '未知账号')}</span>
@@ -97,19 +75,27 @@ function render() {
       ? `<div class="words">意向词：${x.lead_words.map(escapeHtml).join('、')}</div>` : '';
 
     if (x.platform === 'douyin' && x.video_url) {
-      const id = encodeURIComponent(x.video_id || '');
       const eweb = encodeURIComponent(x.video_url);
       return `<div class="card">${head}${titleHtml}${metaHtml}${wordsHtml}
         <div class="actions">
-          <a class="btn-app" href="snssdk1128://aweme/detail/${id}" onclick="scheduleWeb('${eweb}')">📱 在抖音打开</a>
-          <a class="btn-web" href="${encodeURI(x.video_url)}" target="_blank" rel="noopener">🌐 网页版</a>
-          <button class="btn-copy" onclick="copyLink('${eweb}')">📋 复制链接</button>
+          <button class="btn-copy" onclick="copyLink('${eweb}','打开抖音自动跳转')">📋 复制抖音链接</button>
+        </div></div>`;
+    }
+    if (x.platform === 'channels' && x.video_url) {
+      const eweb = encodeURIComponent(x.video_url);
+      return `<div class="card">${head}${titleHtml}${metaHtml}${wordsHtml}
+        <div class="actions">
+          <button class="btn-copy" onclick="copyLink('${eweb}','在微信粘贴打开')">📋 复制视频号链接</button>
         </div></div>`;
     }
     if (x.video_url) {
-      return `<a class="card" href="${encodeURI(x.video_url)}" target="_blank" rel="noopener">${head}${titleHtml}${metaHtml}${wordsHtml}</a>`;
+      const eweb = encodeURIComponent(x.video_url);
+      return `<div class="card">${head}${titleHtml}${metaHtml}${wordsHtml}
+        <div class="actions">
+          <button class="btn-copy" onclick="copyLink('${eweb}','粘贴打开')">📋 复制链接</button>
+        </div></div>`;
     }
-    return `<div class="card">${head}${titleHtml}${metaHtml}${wordsHtml}<div class="nolink">（无链接：${escapeHtml(x.author || '')} · ${escapeHtml(x.title || '')}）</div></div>`;
+    return `<div class="card">${head}${titleHtml}${metaHtml}${wordsHtml}<div class="nolink">（暂无可复制链接，请在微信搜一搜查看「${escapeHtml(x.author || '')}」）</div></div>`;
   }).join('');
 }
 
