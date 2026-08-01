@@ -14,7 +14,7 @@ function platformLabel(p) { return p === 'douyin' ? '抖音' : '视频号'; }
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-// 复制链接：抖音复制 v.douyin.com 短链（打开抖音自动跳转）；视频号复制微信网页版链接（微信粘贴打开）
+// 复制链接：仅抖音复制 v.douyin.com 短链（打开抖音自动跳转）。视频号官方短链需升级 API 套餐，前端不再提供复制按钮。
 function copyLink(text, tip){
   text = decodeURIComponent(text);
   tip = tip || '打开抖音自动跳转';
@@ -84,12 +84,12 @@ function render() {
       return `<div class="card">${head}${titleHtml}${metaHtml}${wordsHtml}
         <div class="actions">${actions}${copyBtn}</div></div>`;
     }
-    if (x.platform === 'channels' && x.video_url) {
-      const eweb = encodeURIComponent(x.video_url);
+    if (x.platform === 'channels') {
+      // B 方案：视频号官方短链（weixin.qq.com/sph/...）需升级 API 套餐才能获取，
+      // 免费套餐拿不到正确链接，故不再提供「复制视频号链接」按钮，改为引导用户微信搜一搜。
+      const author = escapeHtml(x.author || '');
       return `<div class="card">${head}${titleHtml}${metaHtml}${wordsHtml}
-        <div class="actions">
-          <button class="btn-copy" onclick="copyLink('${eweb}','在微信粘贴打开')">📋 复制视频号链接</button>
-        </div></div>`;
+        <div class="nolink">视频号官方短链暂不支持复制（需升级接口套餐）；可在微信「搜一搜」查看作者「${author}」</div></div>`;
     }
     if (x.video_url) {
       const eweb = encodeURIComponent(x.video_url);
