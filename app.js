@@ -14,7 +14,7 @@ function platformLabel(p) { return p === 'douyin' ? '抖音' : '视频号'; }
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-// 复制链接（抖音用官方长链，视频号用微信网页版链接；复制后到对应 App 粘贴打开）
+// 复制链接：抖音复制 v.douyin.com 短链（打开抖音自动跳转）；视频号复制微信网页版链接（微信粘贴打开）
 function copyLink(text, tip){
   text = decodeURIComponent(text);
   tip = tip || '打开抖音自动跳转';
@@ -31,12 +31,12 @@ function copyLink(text, tip){
     ta.value = text; ta.setAttribute('readonly', '');
     ta.style.position = 'fixed'; ta.style.top = '-9999px';
     document.body.appendChild(ta); ta.focus(); ta.select();
-    try { document.execCommand('copy'); toast('✅ 链接已复制，去抖音粘贴打开'); }
+    try { document.execCommand('copy'); toast('✅ 已复制，' + tip); }
     catch (e) { toast('复制失败，请长按链接手动复制'); }
     document.body.removeChild(ta);
   }
   if (navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(text).then(function(){ toast('✅ 链接已复制，去抖音粘贴打开'); }).catch(fallback);
+    navigator.clipboard.writeText(text).then(function(){ toast('✅ 已复制，' + tip); }).catch(fallback);
   } else { fallback(); }
 }
 
@@ -76,10 +76,13 @@ function render() {
 
     if (x.platform === 'douyin' && x.video_url) {
       const eweb = encodeURIComponent(x.video_url);
+      // 抖音短链（v.douyin.com）优先复制，复制后打开抖音 App 自动跳转；缺失则退而复制长链
+      const eshort = x.share_url ? encodeURIComponent(x.share_url) : eweb;
+      const tip = x.share_url ? '打开抖音自动跳转' : '打开抖音网页';
+      const actions = `<a class="btn-web" href="${encodeURI(x.video_url)}" target="_blank" rel="noopener">🌐 网页版</a>`;
+      const copyBtn = `<button class="btn-copy" onclick="copyLink('${eshort}','${tip}')">📋 复制抖音短链</button>`;
       return `<div class="card">${head}${titleHtml}${metaHtml}${wordsHtml}
-        <div class="actions">
-          <button class="btn-copy" onclick="copyLink('${eweb}','打开抖音自动跳转')">📋 复制抖音链接</button>
-        </div></div>`;
+        <div class="actions">${actions}${copyBtn}</div></div>`;
     }
     if (x.platform === 'channels' && x.video_url) {
       const eweb = encodeURIComponent(x.video_url);
